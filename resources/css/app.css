@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        font-family: 'Inter', sans-serif;
+        color: #444444;
+        background-color: #F5F5F5;
+    }
+
+    * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+@layer components {
+    /* =====================
+       Sidebar
+    ===================== */
+    .sidebar {
+        @apply fixed top-0 left-0 h-full w-64 bg-neutral-sidebar text-white flex flex-col z-40;
+        transition: width 0.2s ease;
+    }
+    .sidebar-logo {
+        @apply flex items-center gap-3 px-6 py-5 border-b border-white/10;
+    }
+    .sidebar-nav-item {
+        @apply flex items-center gap-3 px-5 py-3 text-sm font-medium text-white/70 rounded-lg mx-2 my-0.5
+               hover:bg-white/10 hover:text-white transition-all cursor-pointer;
+    }
+    .sidebar-nav-item.active {
+        @apply bg-santander-red text-white;
+    }
+    .sidebar-section-title {
+        @apply text-xs font-semibold uppercase tracking-widest text-white/30 px-5 pt-5 pb-1;
+    }
+
+    /* =====================
+       Cards
+    ===================== */
+    .card {
+        @apply bg-white rounded-card shadow-card p-6;
+    }
+    .card-sm {
+        @apply bg-white rounded-card shadow-card p-4;
+    }
+
+    /* =====================
+       Metric Card
+    ===================== */
+    .metric-card {
+        @apply card flex flex-col gap-2;
+    }
+    .metric-card .metric-value {
+        @apply text-3xl font-bold text-neutral-text;
+    }
+    .metric-card .metric-label {
+        @apply text-sm text-neutral-muted;
+    }
+    .metric-card .metric-icon {
+        @apply w-10 h-10 rounded-lg flex items-center justify-center;
+    }
+
+    /* =====================
+       Buttons
+    ===================== */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold
+               transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+    .btn-primary {
+        @apply btn bg-santander-red text-white hover:bg-santander-red-dark focus:ring-santander-red;
+    }
+    .btn-secondary {
+        @apply btn bg-white text-neutral-text border border-neutral-border hover:bg-neutral-bg focus:ring-neutral-border;
+    }
+    .btn-danger {
+        @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-600;
+    }
+    .btn-success {
+        @apply btn bg-green-600 text-white hover:bg-green-700 focus:ring-green-600;
+    }
+
+    /* =====================
+       Badges / Status
+    ===================== */
+    .badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    }
+    .badge-pending  { @apply badge bg-yellow-100 text-yellow-800; }
+    .badge-approved { @apply badge bg-green-100 text-green-800; }
+    .badge-rejected { @apply badge bg-red-100 text-red-800; }
+    .badge-active   { @apply badge bg-blue-100 text-blue-800; }
+    .badge-inactive { @apply badge bg-gray-100 text-gray-600; }
+
+    /* =====================
+       Form Inputs
+    ===================== */
+    .form-label {
+        @apply block text-sm font-medium text-neutral-text mb-1;
+    }
+    .form-input {
+        @apply w-full px-3 py-2 text-sm border border-neutral-border rounded-lg bg-white
+               focus:outline-none focus:ring-2 focus:ring-santander-red focus:border-transparent
+               placeholder-neutral-muted transition;
+    }
+    .form-select {
+        @apply form-input appearance-none;
+    }
+    .form-error {
+        @apply text-red-600 text-xs mt-1;
+    }
+
+    /* =====================
+       Tables
+    ===================== */
+    .table-wrapper {
+        @apply overflow-x-auto rounded-card shadow-card;
+    }
+    .data-table {
+        @apply w-full text-sm text-left;
+    }
+    .data-table thead {
+        @apply bg-neutral-bg border-b border-neutral-border;
+    }
+    .data-table thead th {
+        @apply px-4 py-3 text-xs font-semibold uppercase tracking-wider text-neutral-muted;
+    }
+    .data-table tbody tr {
+        @apply bg-white border-b border-neutral-border last:border-b-0 hover:bg-neutral-bg transition-colors;
+    }
+    .data-table tbody td {
+        @apply px-4 py-3 text-neutral-text;
+    }
+
+    /* =====================
+       Skeleton Loading
+    ===================== */
+    .skeleton {
+        @apply animate-pulse bg-gray-200 rounded;
+    }
+    .skeleton-text  { @apply skeleton h-4 w-full mb-2; }
+    .skeleton-title { @apply skeleton h-6 w-1/2 mb-3; }
+    .skeleton-card  { @apply skeleton h-32 w-full rounded-card; }
+
+    /* =====================
+       Alert / Notification
+    ===================== */
+    .alert {
+        @apply flex items-start gap-3 p-4 rounded-lg border text-sm;
+    }
+    .alert-warning { @apply alert bg-yellow-50 border-yellow-200 text-yellow-800; }
+    .alert-danger  { @apply alert bg-red-50 border-red-200 text-red-800; }
+    .alert-success { @apply alert bg-green-50 border-green-200 text-green-800; }
+    .alert-info    { @apply alert bg-blue-50 border-blue-200 text-blue-800; }
+}

@@ -1,0 +1,246 @@
+# ERD – Gestão de Equipe HRMS (Santander Style)
+# Diagrama de Entidade-Relacionamento (Lógico)
+# Gerado em: 2024
+# ─────────────────────────────────────────────────────────────────────────────
+
+## ══════════════════════════════════════════════════════
+##  ENTIDADES E ATRIBUTOS
+## ══════════════════════════════════════════════════════
+
+TENANT
+├── id               PK
+├── name             VARCHAR(255)
+├── slug             VARCHAR(255) UNIQUE  ← subdomain identifier
+├── cnpj             VARCHAR(18)  UNIQUE
+├── logo_path        VARCHAR
+├── primary_color    CHAR(7)      DEFAULT '#EC0000'
+├── email            VARCHAR
+├── phone            VARCHAR(20)
+├── address          TEXT
+├── is_active        BOOLEAN
+├── settings         JSON         ← fiscal year, vacation policy, etc.
+├── created_at / updated_at / deleted_at
+│
+└──< DEPARTMENT (1:N)
+└──< JOB_POSITION (1:N)
+└──< USER (1:N)
+└──< EMPLOYEE (1:N)
+└──< VACATION_REQUEST (1:N)
+└──< ABSENCE (1:N)
+└──< JOB_OPENING (1:N)
+
+────────────────────────────────────────────────────────
+
+DEPARTMENT
+├── id               PK
+├── tenant_id        FK → TENANT.id
+├── parent_id        FK → DEPARTMENT.id  (self-referencing, nullable)
+├── name             VARCHAR(255)
+├── code             VARCHAR(30)
+├── description      TEXT
+├── is_active        BOOLEAN
+│
+└──< EMPLOYEE (1:N)
+└──< JOB_POSITION (1:N)
+└──< JOB_OPENING (1:N)
+└──< EMPLOYEE_POSITION_HISTORY (1:N)
+
+────────────────────────────────────────────────────────
+
+JOB_POSITION
+├── id               PK
+├── tenant_id        FK → TENANT.id
+├── department_id    FK → DEPARTMENT.id
+├── title            VARCHAR(255)
+├── level            ENUM(intern, analyst, specialist, coordinator, manager, director, cxo)
+├── description      TEXT
+├── salary_min       DECIMAL(12,2)
+├── salary_max       DECIMAL(12,2)
+├── is_active        BOOLEAN
+│
+└──< EMPLOYEE (1:N)
+└──< JOB_OPENING (1:N)
+└──< EMPLOYEE_POSITION_HISTORY (1:N)
+
+────────────────────────────────────────────────────────
+
+USER
+├── id               PK
+├── tenant_id        FK → TENANT.id  (NULL = SuperAdmin)
+├── name             VARCHAR(255)
+├── email            VARCHAR(255) UNIQUE
+├── password         VARCHAR(255) HASHED
+├── avatar_path      VARCHAR
+├── is_active        BOOLEAN
+├── email_verified_at TIMESTAMP
+│
+└──1 EMPLOYEE (1:1 optional)
+
+────────────────────────────────────────────────────────
+
+EMPLOYEE
+├── id               PK
+├── tenant_id        FK → TENANT.id
+├── user_id          FK → USER.id
+├── department_id    FK → DEPARTMENT.id
+├── job_position_id  FK → JOB_POSITION.id
+├── manager_id       FK → EMPLOYEE.id  (self-referencing, nullable)
+├── employee_code    VARCHAR(50) UNIQUE per tenant
+├── cpf              VARCHAR(14) UNIQUE per tenant
+├── rg               VARCHAR(20)
+├── phone / mobile   VARCHAR(20)
+├── birth_date       DATE
+├── gender           ENUM
+├── address/city/state/cep
+├── admission_date   DATE
+├── dismissal_date   DATE (nullable)
+├── contract_type    ENUM(clt, pj, intern, temporary)
+├── work_mode        ENUM(onsite, remote, hybrid)
+├── salary           DECIMAL(12,2)
+├── status           ENUM(active, inactive, on_leave, terminated)
+├── vacation_balance_days       INT  DEFAULT 30
+├── vacation_acquisition_start  DATE
+├── vacation_acquisition_end    DATE
+├── vacation_concession_end     DATE
+│
+└──< VACATION_REQUEST (1:N)
+└──< ABSENCE (1:N)
+└──< EMPLOYEE_DOCUMENT (1:N)
+└──< EMPLOYEE_POSITION_HISTORY (1:N)
+└──< EMPLOYEE (1:N) ← subordinates
+
+────────────────────────────────────────────────────────
+
+VACATION_REQUEST
+├── id               PK
+├── tenant_id        FK → TENANT.id
+├── employee_id      FK → EMPLOYEE.id
+├── approved_by      FK → USER.id  (nullable)
+├── start_date       DATE
+├── end_date         DATE
+├── days_requested   TINYINT
+├── sell_days        TINYINT  DEFAULT 0  (abono pecuniário, max 10)
+├── status           ENUM(pending, approved, rejected, cancelled)
+├── employee_notes   TEXT
+├── approver_notes   TEXT
+├── submitted_at     TIMESTAMP
+├── reviewed_at      TIMESTAMP
+├── balance_snapshot TINYINT  ← snapshot do saldo no momento do pedido
+
+────────────────────────────────────────────────────────
+
+ABSENCE
+├── id               PK
+├── tenant_id        FK → TENANT.id
+├── employee_id      FK → EMPLOYEE.id
+├── registered_by    FK → USER.id  (nullable)
+├── type             ENUM(sick_leave, accident, maternity, paternity,
+│                         bereavement, jury_duty, unpaid, other)
+├── start_date       DATE
+├── end_date         DATE
+├── notes            TEXT
+├── cid_code         VARCHAR(10)
+├── document_path    VARCHAR
+
+────────────────────────────────────────────────────────
+
+EMPLOYEE_DOCUMENT
+├── id               PK
+├── employee_id      FK → EMPLOYEE.id
+├── uploaded_by      FK → USER.id  (nullable)
+├── type             VARCHAR  (contract, rg, cpf, diploma, medical, other)
+├── title            VARCHAR(255)
+├── file_path        VARCHAR
+├── mime_type        VARCHAR(100)
+├── file_size        BIGINT (bytes)
+├── expires_at       DATE (nullable)
+
+────────────────────────────────────────────────────────
+
+EMPLOYEE_POSITION_HISTORY
+├── id               PK
+├── employee_id      FK → EMPLOYEE.id
+├── department_id    FK → DEPARTMENT.id
+├── job_position_id  FK → JOB_POSITION.id
+├── created_by       FK → USER.id  (nullable)
+├── salary           DECIMAL(12,2)
+├── effective_date   DATE
+├── notes            TEXT
+
+────────────────────────────────────────────────────────
+
+JOB_OPENING  (ATS)
+├── id               PK
+├── tenant_id        FK → TENANT.id
+├── department_id    FK → DEPARTMENT.id
+├── job_position_id  FK → JOB_POSITION.id
+├── created_by       FK → USER.id  (nullable)
+├── title            VARCHAR(255)
+├── description      TEXT
+├── requirements     TEXT
+├── type             ENUM(internal, external, both)
+├── mode             ENUM(onsite, remote, hybrid)
+├── status           ENUM(draft, open, paused, closed)
+├── vacancies        SMALLINT
+├── deadline         DATE
+├── salary_offered   DECIMAL(12,2)
+│
+└──< JOB_CANDIDATE (1:N)
+
+────────────────────────────────────────────────────────
+
+JOB_CANDIDATE  (ATS)
+├── id               PK
+├── job_opening_id   FK → JOB_OPENING.id
+├── employee_id      FK → EMPLOYEE.id  (nullable – internal applicant)
+├── name             VARCHAR(255)
+├── email            VARCHAR(255)
+├── phone            VARCHAR(20)
+├── linkedin_url     VARCHAR
+├── resume_path      VARCHAR
+├── status           ENUM(applied, screening, interview, technical, offer, hired, rejected)
+├── notes            TEXT
+
+## ══════════════════════════════════════════════════════
+##  RELACIONAMENTOS RESUMIDOS
+## ══════════════════════════════════════════════════════
+
+TENANT          ||──o{ USER
+TENANT          ||──o{ DEPARTMENT
+TENANT          ||──o{ JOB_POSITION
+TENANT          ||──o{ EMPLOYEE
+TENANT          ||──o{ VACATION_REQUEST
+TENANT          ||──o{ ABSENCE
+TENANT          ||──o{ JOB_OPENING
+
+DEPARTMENT      ||──o{ DEPARTMENT        (parent/children, self-ref)
+DEPARTMENT      ||──o{ EMPLOYEE
+DEPARTMENT      ||──o{ JOB_POSITION
+DEPARTMENT      ||──o{ JOB_OPENING
+DEPARTMENT      ||──o{ EMPLOYEE_POSITION_HISTORY
+
+JOB_POSITION    ||──o{ EMPLOYEE
+JOB_POSITION    ||──o{ JOB_OPENING
+JOB_POSITION    ||──o{ EMPLOYEE_POSITION_HISTORY
+
+USER            ||──o| EMPLOYEE          (1:1 optional)
+
+EMPLOYEE        ||──o{ EMPLOYEE          (manager/subordinate self-ref)
+EMPLOYEE        ||──o{ VACATION_REQUEST
+EMPLOYEE        ||──o{ ABSENCE
+EMPLOYEE        ||──o{ EMPLOYEE_DOCUMENT
+EMPLOYEE        ||──o{ EMPLOYEE_POSITION_HISTORY
+EMPLOYEE        ||──o{ JOB_CANDIDATE     (internal application)
+
+JOB_OPENING     ||──o{ JOB_CANDIDATE
+
+## ══════════════════════════════════════════════════════
+##  ROLES (Spatie Permission)
+## ══════════════════════════════════════════════════════
+##
+##  super_admin  – Acesso total, gerencia Tenants
+##  admin        – Acesso total ao Tenant (CRUD completo)
+##  manager      – Aprova férias, visualiza equipe
+##  employee     – Portal: ver próprio perfil, solicitar férias
+##
+## ══════════════════════════════════════════════════════
