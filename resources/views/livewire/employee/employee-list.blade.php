@@ -42,6 +42,8 @@
                     <th>Cargo</th>
                     <th>Departamento</th>
                     <th>Tipo</th>
+                    <th>Turno</th>
+                    <th>Equipe</th>
                     <th>Admissão</th>
                     <th>Status</th>
                     <th class="text-right">Ações</th>
@@ -72,6 +74,29 @@
                         <td>{{ $emp->jobPosition->title ?? '—' }}</td>
                         <td>{{ $emp->department->name ?? '—' }}</td>
                         <td class="uppercase text-xs font-semibold">{{ $emp->contract_type }}</td>
+                        <td class="text-xs">
+                            @if($emp->shift)
+                                {{ match($emp->shift) {
+                                    'I'   => 'I — 08:00 às 17:00',
+                                    'II'  => 'II — 15:00 às 00:00',
+                                    'III' => 'III — 00:00 às 08:00',
+                                    default => $emp->shift,
+                                } }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td class="text-xs">
+                            @if($emp->team)
+                                {{ match($emp->team) {
+                                    'run_the_bank'    => 'Run The Bank',
+                                    'change_the_bank' => 'Change The Bank',
+                                    default           => $emp->team,
+                                } }}
+                            @else
+                                —
+                            @endif
+                        </td>
                         <td class="text-neutral-muted whitespace-nowrap">{{ $emp->admission_date->format('d/m/Y') }}</td>
                         <td>
                             @php
@@ -244,6 +269,23 @@
                                 <option value="onsite">Presencial</option>
                                 <option value="remote">Remoto</option>
                                 <option value="hybrid">Híbrido</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Turno</label>
+                            <select wire:model="shift" class="form-select">
+                                <option value="">— Selecione —</option>
+                                <option value="I">I — 08:00 às 17:00</option>
+                                <option value="II">II — 15:00 às 00:00</option>
+                                <option value="III">III — 00:00 às 08:00</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Equipe</label>
+                            <select wire:model="team" class="form-select">
+                                <option value="">— Selecione —</option>
+                                <option value="run_the_bank">Run The Bank</option>
+                                <option value="change_the_bank">Change The Bank</option>
                             </select>
                         </div>
 

@@ -17,7 +17,7 @@ class Employee extends Model
         'tenant_id', 'user_id', 'department_id', 'job_position_id', 'manager_id',
         'employee_code', 'cpf', 'rg', 'phone', 'mobile', 'birth_date', 'gender',
         'address', 'city', 'state', 'cep',
-        'admission_date', 'dismissal_date', 'contract_type', 'work_mode', 'presence_days',
+        'admission_date', 'dismissal_date', 'contract_type', 'work_mode', 'shift', 'team', 'presence_days',
         'salary', 'status',
         'vacation_balance_days', 'vacation_acquisition_start',
         'vacation_acquisition_end', 'vacation_concession_end',
