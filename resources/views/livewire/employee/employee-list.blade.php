@@ -30,6 +30,12 @@
                     Novo Colaborador
                 </button>
             @endcan
+            <div class="flex gap-1">
+                <a href="{{ route('admin.export.employees.xlsx', ['status' => $filterStatus, 'dept' => $filterDept]) }}"
+                   class="btn-secondary py-1.5 px-3 text-xs" title="Exportar XLSX">XLSX</a>
+                <a href="{{ route('admin.export.employees.pdf', ['status' => $filterStatus, 'dept' => $filterDept]) }}"
+                   class="btn-secondary py-1.5 px-3 text-xs" title="Exportar PDF">PDF</a>
+            </div>
         </div>
     </div>
 
@@ -118,17 +124,27 @@
                             </span>
                         </td>
                         <td class="text-right">
-                            @can('update', $emp)
-                                <button type="button" wire:click="openEditModal({{ $emp->id }})"
-                                        class="btn-secondary py-1 px-2 text-xs">
-                                    Editar
+                            <div class="flex items-center justify-end gap-1">
+                                <button type="button" wire:click="openHistory({{ $emp->id }})"
+                                        title="Histórico de cargo"
+                                        class="p-1.5 rounded text-neutral-muted hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                                    </svg>
                                 </button>
-                            @endcan
+                                @can('update', $emp)
+                                    <button type="button" wire:click="openEditModal({{ $emp->id }})"
+                                            class="btn-secondary py-1 px-2 text-xs">
+                                        Editar
+                                    </button>
+                                @endcan
+                            </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="py-12 text-center text-neutral-muted">
+                        <td colspan="9" class="py-12 text-center text-neutral-muted">
                             <svg class="w-12 h-12 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -222,7 +238,17 @@
                         </div>
                         <div>
                             <label class="form-label">CPF</label>
-                            <input type="text" wire:model="cpf" placeholder="000.000.000-00" class="form-input">
+                            <input type="text" wire:model="cpf" placeholder="000.000.000-00" class="form-input"
+                                   maxlength="14"
+                                   x-data x-on:input="
+                                       let v = $el.value.replace(/\D/g,'');
+                                       if(v.length>11) v=v.slice(0,11);
+                                       if(v.length>9) v=v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/,'$1.$2.$3-$4');
+                                       else if(v.length>6) v=v.replace(/(\d{3})(\d{3})(\d{1,3})/,'$1.$2.$3');
+                                       else if(v.length>3) v=v.replace(/(\d{3})(\d{1,3})/,'$1.$2');
+                                       $el.value=v; $dispatch('input',v);
+                                   ">
+                            @error('cpf') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div>
                             <label class="form-label">Data de Nascimento</label>
@@ -339,6 +365,65 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- Position History Modal --}}
+    @if($showHistory)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+             wire:click.self="$set('showHistory', false)">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-border">
+                    <div>
+                        <h2 class="text-base font-bold text-neutral-text">Histórico de Cargos</h2>
+                        @if($historyEmployee)
+                            <p class="text-xs text-neutral-muted mt-0.5">{{ $historyEmployee->user->name }}</p>
+                        @endif
+                    </div>
+                    <button type="button" wire:click="$set('showHistory', false)"
+                            class="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-muted hover:bg-neutral-bg">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6">
+                    @if($positionHistory->isEmpty())
+                        <div class="text-center py-12 text-neutral-muted">
+                            <svg class="w-10 h-10 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                            </svg>
+                            <p class="text-sm">Nenhum histórico de cargo registrado.</p>
+                        </div>
+                    @else
+                        <ol class="relative border-l border-neutral-border ml-3 space-y-6">
+                            @foreach($positionHistory as $record)
+                                <li class="ml-6">
+                                    <span class="absolute -left-2 flex items-center justify-center w-4 h-4 rounded-full ring-4 ring-white bg-santander-red"></span>
+                                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
+                                        <div>
+                                            <p class="text-sm font-semibold text-neutral-text">{{ $record->jobPosition?->title ?? '—' }}</p>
+                                            <p class="text-xs text-neutral-muted">{{ $record->department?->name ?? '—' }}</p>
+                                            @if($record->salary)
+                                                <p class="text-xs text-green-700 font-medium mt-0.5">
+                                                    R$ {{ number_format($record->salary, 2, ',', '.') }}
+                                                </p>
+                                            @endif
+                                            @if($record->notes)
+                                                <p class="text-xs text-neutral-muted italic mt-1">{{ $record->notes }}</p>
+                                            @endif
+                                        </div>
+                                        <span class="text-[11px] text-neutral-muted flex-shrink-0">
+                                            {{ $record->effective_date->format('d/m/Y') }}
+                                        </span>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ol>
+                    @endif
+                </div>
             </div>
         </div>
     @endif

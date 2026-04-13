@@ -4,12 +4,15 @@ namespace App\Livewire\Employee;
 
 use App\Models\Employee;
 use App\Models\Department;
+use App\Models\EmployeePositionHistory;
 use App\Models\JobPosition;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\WelcomeEmployeeNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -24,6 +27,12 @@ class EmployeeList extends Component
     public bool   $showModal      = false;
     public bool   $isEditing      = false;
     public ?int   $editingId      = null;
+
+    // Position history
+    public bool    $showHistory        = false;
+    public ?int    $historyEmployeeId  = null;
+    public         $historyEmployee    = null;
+    public         $positionHistory;
 
     // Form fields
     public string $name           = '';
@@ -55,6 +64,7 @@ class EmployeeList extends Component
 
     public function mount(): void
     {
+        $this->positionHistory = collect();
         if (request()->routeIs('admin.employees.create')) {
             $this->openCreateModal();
         }
@@ -107,9 +117,11 @@ class EmployeeList extends Component
 
         $rules = [
             'name'               => 'required|string|max:255',
-            'email'              => 'required|email|max:255',
+            'email'              => ['required', 'email', 'max:255', $this->isEditing
+                ? 'unique:users,email,' . Employee::find($this->editingId)?->user_id
+                : 'unique:users,email'],
             'employee_code'      => 'nullable|string|max:50',
-            'cpf'                => 'nullable|string|max:14',
+            'cpf'                => ['nullable', 'string', 'max:14', 'regex:/^\d{3}\.\d{3}\.\d{3}-\d{2}$/'],
             'birth_date'         => 'nullable|date',
             'admission_date'     => 'required|date',
             'contract_type'      => 'required|in:clt,pj,intern,temporary',
@@ -124,6 +136,8 @@ class EmployeeList extends Component
         ];
         $this->validate($rules, [
             'selected_tenant_id.required' => 'Selecione um tenant para o colaborador.',
+            'email.unique' => 'Este e-mail já está cadastrado no sistema.',
+            'cpf.regex' => 'CPF deve estar no formato XXX.XXX.XXX-XX.',
         ]);
 
         DB::transaction(function () use ($tenantId) {
@@ -162,15 +176,22 @@ class EmployeeList extends Component
                     return;
                 }
 
+                $tempPassword = Str::random(12);
                 $user = User::create([
                     'tenant_id'   => $tenantId,
                     'name'        => $this->name,
                     'email'       => $this->email,
-                    'password'    => Hash::make(\Str::random(16)),
+                    'password'    => Hash::make($tempPassword),
                     'is_active'   => true,
                     'avatar_path' => $this->photo ? $this->photo->store('avatars', 'public') : null,
                 ]);
                 $user->assignRole('employee');
+
+                try {
+                    $user->notify(new WelcomeEmployeeNotification($tempPassword));
+                } catch (\Exception) {
+                    // Notification failure must not abort employee creation
+                }
 
                 Employee::create([
                     'tenant_id'       => $tenantId,
@@ -214,6 +235,17 @@ class EmployeeList extends Component
         $this->editingId       = null;
         $this->selected_tenant_id = null;
         $this->resetErrorBag();
+    }
+
+    public function openHistory(int $id): void
+    {
+        $this->historyEmployeeId = $id;
+        $this->historyEmployee   = Employee::with('user')->find($id);
+        $this->positionHistory   = EmployeePositionHistory::with('department', 'jobPosition')
+            ->where('employee_id', $id)
+            ->orderByDesc('effective_date')
+            ->get();
+        $this->showHistory = true;
     }
 
     public function render()

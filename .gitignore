@@ -19,3 +19,9 @@ yarn-error.log
 /.idea
 /.vscode
 storage/logs/laravel.log
+storage/framework/views/
+storage/framework/cache/
+storage/framework/sessions/
+storage/app/public/
+storage/app/private/
+bootstrap/cache/

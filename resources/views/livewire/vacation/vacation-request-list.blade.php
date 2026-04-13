@@ -17,6 +17,10 @@
                     <option value="rejected">Rejeitadas</option>
                     <option value="cancelled">Canceladas</option>
                 </select>
+                <a href="{{ route('admin.export.vacations.xlsx', ['status' => $filterStatus]) }}"
+                   class="btn-secondary py-1.5 px-3 text-xs">XLSX</a>
+                <a href="{{ route('admin.export.vacations.pdf', ['status' => $filterStatus]) }}"
+                   class="btn-secondary py-1.5 px-3 text-xs">PDF</a>
             </div>
         </div>
     </div>

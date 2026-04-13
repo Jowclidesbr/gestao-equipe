@@ -115,6 +115,14 @@
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center justify-end gap-1">
+                                <a href="{{ route('admin.job-openings.pipeline', $opening->id) }}"
+                                   title="Pipeline Kanban"
+                                   class="p-1.5 rounded text-neutral-muted hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                                    </svg>
+                                </a>
                                 <button type="button" wire:click="viewCandidates({{ $opening->id }})"
                                         title="Ver candidatos"
                                         class="p-1.5 rounded text-neutral-muted hover:text-santander-red hover:bg-red-50 transition-colors md:hidden">

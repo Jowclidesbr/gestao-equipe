@@ -28,6 +28,8 @@ class DashboardMetricsService
             'upcoming_absences'   => $this->upcomingAbsences($tenantId),
             'upcoming_vacations'  => $this->upcomingVacations($tenantId),
             'open_positions'      => $this->openPositions($tenantId),
+            'monthly_admissions'  => $this->monthlyAdmissions($tenantId),
+            'status_distribution' => $this->statusDistribution($tenantId),
         ];
     }
 
@@ -135,5 +137,33 @@ class DashboardMetricsService
         $q = DB::table('job_openings')->where('status', 'open')->whereNull('deleted_at');
         if ($tenantId) $q->where('tenant_id', $tenantId);
         return (int) $q->sum('vacancies');
+    }
+
+    private function monthlyAdmissions(?int $tenantId): array
+    {
+        $labels = [];
+        $data   = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month  = now()->subMonths($i);
+            $labels[] = $month->translatedFormat('M/y');
+            $q = Employee::whereYear('admission_date', $month->year)
+                         ->whereMonth('admission_date', $month->month);
+            if ($tenantId) $q->where('tenant_id', $tenantId);
+            $data[] = $q->count();
+        }
+        return ['labels' => $labels, 'data' => $data];
+    }
+
+    private function statusDistribution(?int $tenantId): array
+    {
+        $statuses = ['active', 'inactive', 'on_leave', 'terminated'];
+        $labels   = ['Ativos', 'Inativos', 'Licença', 'Desligados'];
+        $data     = [];
+        foreach ($statuses as $status) {
+            $q = Employee::where('status', $status);
+            if ($tenantId) $q->where('tenant_id', $tenantId);
+            $data[] = $q->count();
+        }
+        return ['labels' => $labels, 'data' => $data];
     }
 }

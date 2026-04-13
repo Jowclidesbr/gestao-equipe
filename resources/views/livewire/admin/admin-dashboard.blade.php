@@ -180,7 +180,26 @@
             </div>
         </div>
 
-        {{-- Quick actions bar --}}
+        {{-- ── Charts Row ────────────────────────────────────────────────────── --}}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {{-- Monthly Admissions Bar Chart --}}
+            <div class="card lg:col-span-2">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-semibold text-neutral-text">Admissões por Mês</h2>
+                    <span class="text-xs text-neutral-muted">Últimos 6 meses</span>
+                </div>
+                <canvas id="admissionsChart" height="120"></canvas>
+            </div>
+
+            {{-- Status Doughnut Chart --}}
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-semibold text-neutral-text">Status dos Colaboradores</h2>
+                </div>
+                <canvas id="statusChart" height="160"></canvas>
+            </div>
+        </div>
+
         @canany(['create', 'viewAny'], \App\Models\Employee::class)
         <div class="card">
             <p class="text-sm font-semibold text-neutral-text mb-3">Ações Rápidas</p>
@@ -212,3 +231,63 @@
     @endif
 
 </div>
+
+@assets
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+@endassets
+
+@script
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const admissionsLabels = {!! json_encode($metrics['monthly_admissions']['labels'] ?? []) !!};
+        const admissionsData   = {!! json_encode($metrics['monthly_admissions']['data']   ?? []) !!};
+        const statusLabels     = {!! json_encode($metrics['status_distribution']['labels'] ?? []) !!};
+        const statusData       = {!! json_encode($metrics['status_distribution']['data']   ?? []) !!};
+
+        const admissionsCtx = document.getElementById('admissionsChart');
+        if (admissionsCtx) {
+            new Chart(admissionsCtx, {
+                type: 'bar',
+                data: {
+                    labels: admissionsLabels,
+                    datasets: [{
+                        label: 'Admissões',
+                        data: admissionsData,
+                        backgroundColor: '#EC0000',
+                        borderRadius: 4,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        }
+
+        const statusCtx = document.getElementById('statusChart');
+        if (statusCtx) {
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: ['#22c55e', '#94a3b8', '#f59e0b', '#ef4444'],
+                        hoverOffset: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 12, font: { size: 12 } } }
+                    }
+                }
+            });
+        }
+    });
+</script>
+@endscript

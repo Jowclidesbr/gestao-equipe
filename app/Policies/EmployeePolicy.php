@@ -50,7 +50,7 @@ class EmployeePolicy
 
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isManager();
     }
 
     public function update(User $user, Employee $employee): bool
@@ -58,7 +58,7 @@ class EmployeePolicy
         if ($user->tenant_id !== $employee->tenant_id) {
             return false;
         }
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isManager();
     }
 
     public function delete(User $user, Employee $employee): bool

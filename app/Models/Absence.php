@@ -14,11 +14,13 @@ class Absence extends Model
         'tenant_id', 'employee_id', 'registered_by',
         'type', 'start_date', 'end_date',
         'notes', 'cid_code', 'document_path',
+        'status', 'approved_by', 'approved_at',
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date'   => 'date',
+        'start_date'  => 'date',
+        'end_date'    => 'date',
+        'approved_at' => 'datetime',
     ];
 
     public function tenant(): BelongsTo
